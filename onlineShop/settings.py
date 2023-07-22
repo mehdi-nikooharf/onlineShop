@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'rest_framework',
+
     'rest_framework_simplejwt',
     'products'
     
@@ -87,6 +89,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    # 'DEFAULT_RENDERER_CLASSES': (
+    #     # 'rest_framework.renderers.JSONRenderer',
+    # ),
 }
 
 # Password validation
