@@ -1,6 +1,6 @@
 from django.urls import path, include
 
-from .views import CategoryListView, CategoryDetailView, ProductListView
+from .views import CategoryListView, CategoryDetailView, ProductListView, ProductDetailView, ListOrBulkDeleteProductImages
 
 
 urlpatterns = [
@@ -10,6 +10,9 @@ urlpatterns = [
     ])),
     path('products/', include([
         path('', ProductListView.as_view(), name='product-list'),
+        path('<int:pk>', ProductDetailView.as_view(), name='product-detail'),
+
+        path('<int:product_id>/images', ListOrBulkDeleteProductImages.as_view(), name='product-images-delete'),
     ])),
 
 ]
