@@ -3,6 +3,7 @@ import os
 from django.shortcuts import render
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
+from rest_framework.pagination import LimitOffsetPagination, PageNumberPagination
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -10,6 +11,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser
 
 from onlineShop.permission import IsProductOwnerOrSuperUser, IsAdminUserOrReadOnly
+from .pagination import CustomPageNumberPagination
 from .serializers import ImageSerializer, CategorySerializer, ProductReadSerializer, ProductWriteSerializer
 from .models import Category, Product, Image
 
@@ -60,13 +62,17 @@ class CategoryDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class ProductListView(APIView):
+class ProductListView(APIView, CustomPageNumberPagination):
     permission_classes = [IsAuthenticatedOrReadOnly, IsAdminUserOrReadOnly]
 
     def get(self, request):
+
         products = Product.objects.all()
-        serializer = ProductReadSerializer(products, many=True, context={'request':request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        if request.user.is_staff:
+            self.page_size = 3  #1000
+        result_page = self.paginate_queryset(products, request)
+        serializer = ProductReadSerializer(result_page, many=True, context={'request':request})
+        return self.get_paginated_response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
         serializer = ProductWriteSerializer(data=request.data, context={'request':request})
