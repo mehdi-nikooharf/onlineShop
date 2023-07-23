@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser
 
-from onlineShop.permission import IsProductOwnerOrReadOnly, IsAdminUserOrReadOnly
+from onlineShop.permission import IsProductOwnerOrSuperUser, IsAdminUserOrReadOnly
 from .serializers import ImageSerializer, CategorySerializer, ProductReadSerializer, ProductWriteSerializer
 from .models import Category, Product, Image
 
@@ -80,10 +80,10 @@ class ProductListView(APIView):
 
 
 class ProductDetailView(APIView):
-    permission_classes = [IsAuthenticatedOrReadOnly, IsProductOwnerOrReadOnly]
-    def get_object(self,pk):
+    permission_classes = [IsAuthenticatedOrReadOnly, IsProductOwnerOrSuperUser]
+    def get_object(self, pk, **kwargs):
         try:
-            product = Product.objects.get(pk=pk)
+            product = Product.objects.get(pk=pk, **kwargs)
         except ObjectDoesNotExist:
             raise Http404
         return product
@@ -106,7 +106,9 @@ class ProductDetailView(APIView):
 
 
     def delete(self, request, pk):
-        product = self.get_object(pk=pk)
+        product = self.get_object(pk=pk, number_of_sold=0)
+        if product:
+            self.check_object_permissions(request, product)
         bulkRemoveImage(objs=product.images.all())
         product.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -117,7 +119,7 @@ class ProductDetailView(APIView):
 
 class ListOrBulkDeleteProductImages(APIView):
 
-    permission_classes = [IsAuthenticatedOrReadOnly, IsProductOwnerOrReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly, IsProductOwnerOrSuperUser]
     # def get(self, request, product_id, *args, **kwargs):
     #     ids = request.query_params.get('ids').split(',')
     #     queryset = Image.objects.filter(id__in=ids, product_id=product_id)
