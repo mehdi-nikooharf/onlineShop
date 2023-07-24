@@ -26,7 +26,7 @@ class Product(models.Model):
     avatar = models.ImageField(blank=True, upload_to='products')
     # is_enable = models.BooleanField(verbose_name=_('is enable'), default=True)
     price = models.FloatField(blank=True, default=0)
-    slug = models.SlugField(default=None, blank=True, null=True)
+    # slug = models.SlugField(default=None, blank=True, null=True)
     quantity = models.IntegerField(default=0)
     number_of_sold = models.IntegerField(default=0)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('user'), on_delete=models.CASCADE)
