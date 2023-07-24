@@ -28,7 +28,7 @@ class ProductReadSerializer(serializers.HyperlinkedModelSerializer):
 
     class  Meta:
         model = Product
-        fields = [ 'id', 'author', 'name', 'description', 'categories', 'images', 'quantity', 'number_of_sold', 'created_time']
+        fields = [ 'id', 'author', 'name', 'description', 'categories', 'images', 'quantity', 'number_of_sold', 'price' , 'created_time']
         depth = 1
 
     # user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source='user.username')

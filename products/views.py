@@ -1,4 +1,5 @@
 import os
+from django.db.models import Q
 
 from django.shortcuts import render
 from django.core.exceptions import ObjectDoesNotExist
@@ -65,10 +66,42 @@ class CategoryDetailView(APIView):
 class ProductListView(APIView, CustomPageNumberPagination):
     permission_classes = [IsAuthenticatedOrReadOnly, IsAdminUserOrReadOnly]
 
-    def get(self, request):
+    def get(self, request, **kwargs):
+        order_by_fields = ['id', '-id', 'name', '-name', 'price', '-price', 'created_time', '-created_time']
+        order_by = list(filter(lambda x: x != '', request.GET.get('order_by').split(','))) if request.GET.get('order_by') else []
 
-        products = Product.objects.all()
-        if request.user.is_staff:
+
+        options = {}
+        options['id__in'] = list(filter(lambda x: x != '' and x.isnumeric(), request.GET.get('ids').split(','))) if request.GET.get('ids') else None
+        options['name__icontains'] = request.GET.get('name')
+        options['user__username__icontains'] = request.GET.get('author')
+        options['price'] = request.GET.get('price') if request.GET.get('price') and request.GET.get('price').isnumeric() else None
+        options['price__gte'] = request.GET.get('price_greater_than') if request.GET.get('price_greater_than') and request.GET.get('price_greater_than').isnumeric() else None
+        options['price__lte'] = request.GET.get('price_less_than') if request.GET.get('price_less_than') and request.GET.get('price_less_than').isnumeric() else None
+        options['number_of_sold'] = request.GET.get('number_of_sold') if request.GET.get('number_of_sold') and request.GET.get('number_of_sold').isnumeric() else None
+        options['number_of_sold__gte'] = request.GET.get('number_of_sold_greater_than') if request.GET.get('number_of_sold_greater_than') and request.GET.get('number_of_sold_greater_than').isnumeric() else None
+        options['number_of_sold__lte'] = request.GET.get('number_of_sold_less_than') if request.GET.get('number_of_sold_less_than') and request.GET.get('number_of_sold_less_than').isnumeric() else None
+        options['quantity'] = request.GET.get('quantity') if request.GET.get('quantity') and request.GET.get('quantity').isnumeric() else None
+        options['quantity__gte'] = request.GET.get('quantity_greater_than') if request.GET.get('quantity_greater_than') and request.GET.get('quantity_greater_than').isnumeric() else None
+        options['quantity__lte'] = request.GET.get('quantity_less_than') if request.GET.get('quantity_less_than') and request.GET.get('quantity_less_than').isnumeric() else None
+        # options['created_time__gte'] = request.GET.get('date_from')
+        # options['created_time__lte'] = request.GET.get('date_to')
+        options['categories__id__in'] = list(filter(lambda x: x != '' and x.isnumeric(), request.GET.get('categories').split(','))) if request.GET.get('categories') else None
+
+
+        for order_by_item in order_by:
+            if order_by_item not in order_by_fields:
+                order_by.remove(order_by_item)
+
+
+        for option in list(options):
+            if options[option] is None:
+                del(options[option])
+
+        products = Product.objects.filter(**options).order_by(*order_by)
+
+
+        if request.user.is_staff:  #Admins have different page_size
             self.page_size = 3  #1000
         result_page = self.paginate_queryset(products, request)
         serializer = ProductReadSerializer(result_page, many=True, context={'request':request})
