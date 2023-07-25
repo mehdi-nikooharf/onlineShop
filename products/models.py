@@ -91,11 +91,10 @@ def auto_delete_file_on_change(sender, instance, **kwargs):
     except Product.DoesNotExist:
         return False
 
-    if instance.avatar:
-        new_file = instance.avatar
-        if old_file and not old_file == new_file:
-            if os.path.exists(old_file.path):
-                os.remove(old_file.path)
+    if old_file:
+        if os.path.exists(old_file.path):
+            os.remove(old_file.path)
+
 
 
 
@@ -114,11 +113,10 @@ def auto_delete_file_on_change(sender, instance, **kwargs):
     except Category.DoesNotExist:
         return False
 
-    if instance.avatar:
-        new_file = instance.avatar
-        if old_file and not old_file == new_file:
-            if os.path.exists(old_file.path):
-                os.remove(old_file.path)
+    if old_file:
+        if os.path.exists(old_file.path):
+            os.remove(old_file.path)
+
 
 @receiver(models.signals.post_delete, sender=Category)
 def auto_delete_file_on_delete(sender, instance, **kwargs):
