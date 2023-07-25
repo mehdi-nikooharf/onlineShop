@@ -1,10 +1,7 @@
-import os
 from django.db.models import Q
 
-from django.shortcuts import render
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
-from rest_framework.pagination import LimitOffsetPagination, PageNumberPagination
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -16,16 +13,13 @@ from .pagination import CustomPageNumberPagination
 from .serializers import ImageSerializer, CategorySerializer, ProductReadSerializer, ProductWriteSerializer
 from .models import Category, Product, Image
 
-def bulkRemoveImage(objs):
-    for obj in objs:
-        img = obj.image.path
-        if os.path.exists(img):
-            os.remove(img)
 
 class CategoryListView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
         categories = Category.objects.all()
-        serializer = CategorySerializer(categories, many=True, context={'request':request})
+        serializer = CategorySerializer(categories, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
@@ -37,6 +31,8 @@ class CategoryListView(APIView):
 
 
 class CategoryDetailView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get_object(self,pk):
         try:
             category = Category.objects.get(pk=pk)
@@ -45,20 +41,14 @@ class CategoryDetailView(APIView):
         return category
     def put(self, request, pk):
         category = self.get_object(pk=pk)
-        serializer = CategorySerializer(category, request.data)
+        serializer = CategorySerializer(category, request.data, context={'request': request})
         if serializer.is_valid():
-            oldImg = category.avatar.path
-            if os.path.exists(oldImg):
-                os.remove(oldImg)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         category = self.get_object(pk=pk)
-        oldImg = category.avatar.path
-        if os.path.exists(oldImg):
-            os.remove(oldImg)
         category.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -104,13 +94,11 @@ class ProductListView(APIView, CustomPageNumberPagination):
         if request.user.is_staff:  #Admins have different page_size
             self.page_size = 3  #1000
         result_page = self.paginate_queryset(products, request)
-        serializer = ProductReadSerializer(result_page, many=True, context={'request':request})
+        serializer = ProductReadSerializer(result_page, many=True, context={'request': request})
         return self.get_paginated_response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        serializer = ProductWriteSerializer(data=request.data, context={'request':request})
-        # print(request.POST.getlist('categories'))
-
+        serializer = ProductWriteSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -130,14 +118,14 @@ class ProductDetailView(APIView):
 
     def get(self, request, pk):
         product = self.get_object(pk=pk)
-        serializer = ProductReadSerializer(product, context={'request':request})
+        serializer = ProductReadSerializer(product, context={'request': request})
         return Response(serializer.data)
     def put(self, request, pk):
         product = self.get_object(pk=pk)
         if product:
             self.check_object_permissions(request, product)
 
-        serializer = ProductWriteSerializer(product, request.data, context={'request':request})
+        serializer = ProductWriteSerializer(product, request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -148,7 +136,6 @@ class ProductDetailView(APIView):
         product = self.get_object(pk=pk, number_of_sold=0)
         if product:
             self.check_object_permissions(request, product)
-        bulkRemoveImage(objs=product.images.all())
         product.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -176,7 +163,10 @@ class ListOrBulkDeleteProductImages(APIView):
 
         if ids:
             queryset = Image.objects.filter(id__in=ids, product_id=product_id)
-            bulkRemoveImage(objs=queryset)
-            queryset.delete()
+            if queryset:
+                queryset.delete()
+            else:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
