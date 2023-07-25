@@ -88,7 +88,7 @@ class ProductReadSerializer(serializers.HyperlinkedModelSerializer):
 class ProductWriteSerializer(serializers.ModelSerializer):
     selected_categories = serializers.ListField(child=serializers.IntegerField(allow_null=False), write_only=True, required=True)
     author = serializers.PrimaryKeyRelatedField(source='user.username', read_only=True)
-    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), default=serializers.CurrentUserDefault(), write_only=True)
+    # user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), default=serializers.CurrentUserDefault(), write_only=True)
     uploaded_images = serializers.ListField(
         child = serializers.ImageField(max_length=1000000, allow_empty_file=False, use_url=False),
         write_only=True,
@@ -102,7 +102,7 @@ class ProductWriteSerializer(serializers.ModelSerializer):
             'id', 'name', 'description', 'quantity',
             'number_of_sold', 'created_time', 'images',
             'uploaded_images', 'categories', 'selected_categories',
-            'user', 'author', 'avatar', 'price'
+            'author', 'avatar', 'price'
         ]
         depth = 1
 
@@ -144,7 +144,6 @@ class ProductWriteSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         uploaded_images = None
         # selected_categories = None
-        user = validated_data.pop('user')
         selected_categories = validated_data.pop('selected_categories', [])
 
         if 'uploaded_images' in validated_data:
@@ -152,7 +151,7 @@ class ProductWriteSerializer(serializers.ModelSerializer):
 
 
         product = Product.objects.create(
-            user=user,
+            user=self.context.get('request').user,
             **validated_data,
         )
 
