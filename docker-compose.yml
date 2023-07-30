@@ -1,0 +1,43 @@
+version: "3.8"
+services:
+  app:
+    build: .
+    volumes:
+      - .:/app
+      - /tmp/app/mysql:/run/mysql
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    image: app:django
+    container_name: django_container
+    command: >
+      sh -c "python3 manage.py migrate &&
+             python3 manage.py runserver 0.0.0.0:8000"
+
+  db:
+    image: postgres:15
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - .data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    container_name: postgres_db
+
+  redis:
+    image: redis:alpine
+  celery:
+    restart: always
+    build:
+      context: .
+    command: celery -A onlineShop worker -l info
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+      - app
