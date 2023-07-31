@@ -34,7 +34,7 @@ services:
     restart: always
     build:
       context: .
-    command: celery -A onlineShop worker -l info
+    command: "celery -A onlineShop worker -l info"
     volumes:
       - .:/app
     depends_on:
