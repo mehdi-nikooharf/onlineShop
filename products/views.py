@@ -13,6 +13,8 @@ from .pagination import CustomPageNumberPagination
 from .serializers import ImageSerializer, CategorySerializer, ProductReadSerializer, ProductWriteSerializer
 from .models import Category, Product, Image
 
+from .tasks import send_mail_fun
+
 
 class CategoryListView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -101,6 +103,7 @@ class ProductListView(APIView, CustomPageNumberPagination):
         serializer = ProductWriteSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
+            send_mail_fun.delay()  #sending email
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
