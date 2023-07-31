@@ -15,7 +15,12 @@ import os
 from pathlib import Path
 from datetime import timedelta
 
-from .local_settings import *
+import environ
+
+# Initialise environment variables
+env = environ.Env()
+environ.Env.read_env()
+
 
 
 
@@ -26,8 +31,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-32z$xd53+5ao6gj@vjcv9l@1&iairi2z$v8hz!bi8=6&5xb_^v'
+
 
 
 
@@ -41,11 +45,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # 'django-celery-results',
-
+    'django_celery_results',
     'rest_framework',
-
     'rest_framework_simplejwt',
+
     'products'
     
 
@@ -153,12 +156,47 @@ SIMPLE_JWT = {
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 MEDIA_URL = '/media/'
 
+#SECRET_KEY
+SECRET_KEY = env('SECRET_KEY')
 
+#ALLOWED_HOSTS
+ALLOWED_HOSTS = env('ALLOWED_HOSTS').split(' ')
+
+DEBUG = env.bool('DEBUG', default=False)
+IS_DEVEL = env.bool('IS_DEVEL', default=False)
+
+
+
+# SMTP SETTINGS
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = env.str('DEFAULT_FROM_EMAIL', default='<django>')
 
 # CELERY SETTINGS
-CELERY_BROKER_URL = 'redis://redis:6379'
+CELERY_BROKER_URL = 'redis://redis:6379/0'
 CELERY_ACCEPT_CONTENT = {'application/json'}
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Tehran'
-# CELERY_RESULT_BACKEND = "redis://redis:6379/0"
+CELERY_RESULT_BACKEND = "redis://redis:6379/0"
+
+
+#DATABASES SETTINGS
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': env('DATABASE_NAME'),
+        'USER': env('DATABASE_USER'),
+        'PASSWORD': env('DATABASE_PASS'),
+        'HOST': 'db',
+        'PORT': '5432',
+    }
+
+}
+
