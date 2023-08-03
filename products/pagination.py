@@ -4,7 +4,14 @@ from collections import OrderedDict
 
 
 class CustomPageNumberPagination(pagination.PageNumberPagination):
-    page_size = 2 #100
+    def get_page_size(self, request):
+        if request.user.is_staff:  #Admins have different page_size
+            return 1000
+        else:
+            return 100
+
+
+    page_size = 100
     page_size_query_param = 'count'
     max_page_size = 1000
     page_size_query_param = 'page_size'
