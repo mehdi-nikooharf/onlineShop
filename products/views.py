@@ -109,21 +109,13 @@ class ProductDeleteAPIView(DestroyAPIView):
 
 
 
+class BulkDeleteProductImages(DestroyAPIView):
+    permission_classes = [IsAuthenticated, IsProductOwnerOrSuperUser]
+    serializer_class = ImageSerializer
 
-
-
-
-
-class ListOrBulkDeleteProductImages(APIView):
-
-    permission_classes = [IsAuthenticatedOrReadOnly, IsProductOwnerOrSuperUser]
-    # def get(self, request, product_id, *args, **kwargs):
-    #     ids = request.query_params.get('ids').split(',')
-    #     queryset = Image.objects.filter(id__in=ids, product_id=product_id)
-    #     serializer = ImageSerializer(queryset, many=True)
-    #     return Response(serializer.data)
-
-    def delete(self, request, product_id, *args, **kwargs):
+    def get_queryset(self, **kwargs):
+        return self.get_serializer().Meta.model.objects.filter(**kwargs)
+    def delete(self, request, product_id):
         ids = request.query_params.get('ids').split(',')
         try:
             product = Product.objects.get(pk=product_id)
@@ -131,9 +123,11 @@ class ListOrBulkDeleteProductImages(APIView):
             raise Http404
         if product:
             self.check_object_permissions(request, product)
-
         if ids:
-            queryset = Image.objects.filter(id__in=ids, product_id=product_id)
+            filters = {}
+            filters['id__in'] = ids
+            filters['product_id'] = product_id
+            queryset = self.get_queryset(**filters)
             if queryset:
                 queryset.delete()
             else:

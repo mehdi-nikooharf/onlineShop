@@ -1,9 +1,8 @@
 from django.urls import path, include
 
-from .views import ListOrBulkDeleteProductImages
 from .views import (CategoryListAPIView, CategoryCreateAPIView, CategoryUpdateAPIView, CategoryDeleteAPIView,
                     ProductListAPIView, ProductRetrieveAPIView, ProductUpdateAPIView, ProductDeleteAPIView,
-                     ProductCreateAPIView
+                    BulkDeleteProductImages, ProductCreateAPIView
                     )
 
 
@@ -21,8 +20,8 @@ urlpatterns = [
         path('<int:pk>', ProductRetrieveAPIView.as_view(), name='product-detail'),
         path('update/<int:pk>', ProductUpdateAPIView.as_view(), name='category-update'),
         path('delete/<int:pk>', ProductDeleteAPIView.as_view(), name='category-delete'),
+        path('<int:product_id>/images', BulkDeleteProductImages.as_view(), name='product-images-delete'),
 
-        path('<int:product_id>/images', ListOrBulkDeleteProductImages.as_view(), name='product-images-delete'),
     ])),
 
 ]
