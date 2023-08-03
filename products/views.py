@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser
+from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView, UpdateAPIView, DestroyAPIView
 
 from onlineShop.permission import IsProductOwnerOrSuperUser, IsAdminUserOrReadOnly
 from .pagination import CustomPageNumberPagination
@@ -15,44 +16,39 @@ from .models import Category, Product, Image
 
 from .tasks import send_mail_fun
 
-
-class CategoryListView(APIView):
+#Category
+class CategoryListAPIView(ListAPIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
+    model = Category
+    serializer_class = CategorySerializer
+    queryset = Category.objects.all()
 
-    def get(self, request):
-        categories = Category.objects.all()
-        serializer = CategorySerializer(categories, many=True, context={'request': request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def post(self, request):
-        serializer = CategorySerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class CategoryDetailView(APIView):
+class CategoryCreateAPIView(CreateAPIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
+    serializer_class = CategorySerializer
 
-    def get_object(self,pk):
-        try:
-            category = Category.objects.get(pk=pk)
-        except ObjectDoesNotExist:
-            raise Http404
-        return category
+class CategoryUpdateAPIView(UpdateAPIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    serializer_class = CategorySerializer
+    def get_queryset(self, pk):
+        return self.get_serializer().Meta.model.objects.filter(pk=pk).first()
     def put(self, request, pk):
-        category = self.get_object(pk=pk)
-        serializer = CategorySerializer(category, request.data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        category = self.get_queryset(pk)
+        if category:
+            serializer = self.serializer_class(category, request.data, context={'request': request})
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, pk):
-        category = self.get_object(pk=pk)
-        category.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+class CategoryDeleteAPIView(DestroyAPIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    serializer_class = CategorySerializer
+    queryset = Category.objects.all()
+    lookup_field = 'pk'
+
+
+
 
 
 class ProductListView(APIView, CustomPageNumberPagination):
