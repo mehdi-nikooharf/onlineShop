@@ -36,10 +36,16 @@ urlpatterns = [
 
 
     path('api/', include([
-        path('token/', include([
-            path('', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-            path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+        path('account/', include([
+            path('', include('account.urls')),
+
+            path('token/', include([
+                path('', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+                path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+            ])),
         ])),
+
+
 
         path('', include('products.urls'))
 
