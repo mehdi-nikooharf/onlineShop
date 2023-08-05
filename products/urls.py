@@ -18,8 +18,8 @@ urlpatterns = [
         path('', ProductListAPIView.as_view(), name='product-list'),
         path('create', ProductCreateAPIView.as_view(), name='product-create'),
         path('<int:pk>', ProductRetrieveAPIView.as_view(), name='product-detail'),
-        path('update/<int:pk>', ProductUpdateAPIView.as_view(), name='category-update'),
-        path('delete/<int:pk>', ProductDeleteAPIView.as_view(), name='category-delete'),
+        path('update/<int:pk>', ProductUpdateAPIView.as_view(), name='product-update'),
+        path('delete/<int:pk>', ProductDeleteAPIView.as_view(), name='product-delete'),
         path('<int:product_id>/images', BulkDeleteProductImages.as_view(), name='product-images-delete'),
 
     ])),

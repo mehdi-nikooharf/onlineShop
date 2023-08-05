@@ -42,6 +42,7 @@ class CategoryUpdateAPIView(UpdateAPIView):
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
 class CategoryDeleteAPIView(DestroyAPIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -57,6 +58,11 @@ class ProductListAPIView(ListAPIView):
     model = Product
     serializer_class = ProductReadSerializer
     queryset = Product.objects.all()
+    # def get_queryset(self):
+    #     class Meta:
+    #         ordering = ['-id']
+    #     return Product.objects.all()
+
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['id', 'name', 'price', 'number_of_sold', 'quantity', 'created_time', 'categories', 'description']
     search_fields = ['id', 'name', 'price']
